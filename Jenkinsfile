@@ -61,7 +61,7 @@ pipeline {
         }
 
 
-        stage('Run Build test'){
+        stage('Run Build for tests'){
             steps {
                 script{
                     sh """
@@ -77,9 +77,9 @@ pipeline {
                 stage('Acceptance Test MOVIE SERVICE'){
                     steps {
                         script{
-                            def response = sh(script: "curl -s http://localhost:8081/api/v1/movies/docs", returnStdout: true).trim()
-                            if (!response.contains("FastAPI - Swagger UI")) {
-                                error("Acceptance Test MOVIE SERVICE failed: Expected 'FastAPI - Swagger UI' in response")
+                            def response = sh(script: "curl -s http://localhost:8081/api/v1/movies/docs | grep 'FastAPI - Swagger UI'", returnStatus: true)
+                            if (response != 0) {
+                                error("Acceptance Test MOVIE SERVICE failed: 'FastAPI - Swagger UI' not found in response")
                             }
                         }
                     }
@@ -88,9 +88,9 @@ pipeline {
                 stage('Acceptance Test CAST SERVICE'){
                     steps {
                         script{
-                            def response = sh(script: "curl -s http://localhost:8081/api/v1/casts/docs", returnStdout: true).trim()
-                            if (!response.contains("FastAPI - Swagger UI")) {
-                                error("Acceptance Test CAST SERVICE failed: Expected 'FastAPI - Swagger UI' in response")
+                            def response = sh(script: "curl -s http://localhost:8081/api/v1/casts/docs | grep 'FastAPI - Swagger UI'", returnStatus: true)
+                            if (response != 0) {
+                                error("Acceptance Test CAST SERVICE failed: 'FastAPI - Swagger UI' not found in response")
                             }
                         }
                     }
@@ -173,6 +173,7 @@ pipeline {
                             cat $KUBECONFIG > .kube/config
                             helm upgrade --install movie-app ./movie-app --values=values.yml --namespace dev --set nginx.nodePort=$NODEPORT_DEV
                             '''
+                            echo 'Evironement de DEV: $IP_DEV:$NODEPORT_DEV'
                         }
                     }
                 }
@@ -190,6 +191,7 @@ pipeline {
                             cat $KUBECONFIG > .kube/config
                             helm upgrade --install movie-app ./movie-app --values=values.yml --namespace qa --set nginx.nodePort=$NODEPORT_QA
                             '''
+                            echo 'Evironement de QA: $IP_QA:$NODEPORT_QA'
                         }
                     }
                 }
@@ -207,6 +209,7 @@ pipeline {
                             cat $KUBECONFIG > .kube/config
                             helm upgrade --install movie-app ./movie-app --values=values.yml --namespace staging --set nginx.nodePort=$NODEPORT_STAGING
                             '''
+                            echo 'Evironement de STAGING: $IP_STAGING:$NODEPORT_STAGING'
                         }
                     }
                 }
@@ -235,6 +238,7 @@ pipeline {
                     cat $KUBECONFIG > .kube/config
                     helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=$NODEPORT_PROD
                     '''
+                    echo 'Evironement de PROD: $IP_PROD:$NODEPORT_PROD'
                 }
             }
         }
