@@ -7,8 +7,17 @@ pipeline {
         CAST_IMAGE = "mohakadd/cast-service"
         MOVIE_IMAGE = "mohakadd/movie-service"
         DOCKER_TAG = "latest"
-        // Vriable pour la branche courrente
+        // Variable pour la branche courrente
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
+        // Environements
+        IP_PROD = 52.213.203.192
+        IP_DEV = 52.213.203.192
+        IP_QA = 52.213.203.192
+        IP_STAGING = 52.213.203.192
+        NODEPORT_PROD = 30000
+        NODEPORT_DEV = 30001
+        NODEPORT_QA = 30002
+        NODEPORT_STAGING = 30003
     }
 
     stages {
@@ -162,7 +171,7 @@ pipeline {
                             mkdir .kube
                             ls
                             cat $KUBECONFIG > .kube/config
-                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace dev --set nginx.nodePort=30001
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace dev --set nginx.nodePort=$NODEPORT_DEV
                             '''
                         }
                     }
@@ -179,7 +188,7 @@ pipeline {
                             mkdir .kube
                             ls
                             cat $KUBECONFIG > .kube/config
-                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace qa --set nginx.nodePort=30002
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace qa --set nginx.nodePort=$NODEPORT_QA
                             '''
                         }
                     }
@@ -196,7 +205,7 @@ pipeline {
                             mkdir .kube
                             ls
                             cat $KUBECONFIG > .kube/config
-                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace staging --set nginx.nodePort=30003
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace staging --set nginx.nodePort=$NODEPORT_STAGING
                             '''
                         }
                     }
@@ -224,7 +233,7 @@ pipeline {
                     mkdir .kube
                     ls
                     cat $KUBECONFIG > .kube/config
-                    helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=30000
+                    helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=$NODEPORT_PROD
                     '''
                 }
             }
