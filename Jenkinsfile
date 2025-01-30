@@ -100,8 +100,6 @@ pipeline {
                     mkdir .kube
                     ls
                     cat $KUBECONFIG > .kube/config
-                    // cp movie-app/values.yaml values.yml
-                    // cat values.yml
                     helm upgrade --install movie-app ./movie-app --values=values.yml --namespace dev --set nginx.nodePort=30000
                     '''
                 }
