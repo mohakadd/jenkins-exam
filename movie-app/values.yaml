@@ -1,0 +1,38 @@
+movie_db:
+  postgresUser: movie_db_username
+  postgresPassword: movie_db_password
+  postgresDB: movie_db_dev
+  storageClassName: default
+  storageSize: 1Gi
+
+cast_db:
+  postgresUser: cast_db_username
+  postgresPassword: cast_db_password
+  postgresDB: cast_db_dev
+  storageClassName: default
+  storageSize: 1Gi
+
+movie_service:
+  databaseURI: postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev
+  castServiceHostURL: http://cast-service:8000/api/v1/casts/
+  tag: ""
+cast_service:
+  databaseURI: postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev
+  tag: ""
+
+nginx:
+  image: nginx:latest
+  ports:
+    - containerPort: 8080
+  nodePort: null
+  volumeMounts:
+    - name: nginx-config
+      mountPath: /etc/nginx/conf.d/default.conf
+  volumes:
+    - name: nginx-config
+      hostPath:
+        path: /path/to/your/nginx_config.conf
+
+  movieServiceHostURL: http://movie-service:8080
+  castServiceHostURL: http://cast-service:8000
+

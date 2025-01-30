@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-movie-service-deployment
+  labels:
+    app: movie-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movie-service
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: movie-service
+        release: {{ .Release.Name }}
+    spec:
+      initContainers:
+      - name: wait-for-movie-db
+        image: busybox
+        command:
+          - "/bin/sh"
+          - "-c"
+          - |
+            until nc -z -w 2 movie-db 5432; do
+              echo "Waiting for movie-db StatefulSet to be ready..."
+              sleep 5
+            done
+      containers:
+      - name: movie-service
+        #build: ./movie-service
+        image: mohakadd/movie-service:latest
+        imagePullPolicy: IfNotPresent
+        command:
+          - "uvicorn"
+          - "app.main:app"
+          - "--reload"
+          - "--host"
+          - "0.0.0.0"
+          - "--port"
+          - "8000"
+        env:
+        - name: DATABASE_URI
+          value: {{ .Values.movie_service.databaseURI }}
+        - name: CAST_SERVICE_HOST_URL
+          value: {{ .Values.movie_service.castServiceHostURL }}
+        ports:
+        - containerPort: 8000

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-movie-db-statefulset
+  labels:
+    app: movie-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movie-db
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: movie-db
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: movie-db
+        image: postgres:12.1-alpine
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.movie_db.postgresUser }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.movie_db.postgresPassword }}
+        - name: POSTGRES_DB
+          value: {{ .Values.movie_db.postgresDB }}
+        volume:
+        - name: postgres-data-movie
+        persistentVolumeClaim:
+          claimName: postgresql-pvc-movie
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-pvc-movie
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
