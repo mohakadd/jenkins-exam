@@ -10,17 +10,17 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout'){
             steps {
                 checkout scm
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Build Docker Images'){
             parallel {
-                stage('Build Cast Service') {
+                stage('Build Cast Service'){
                     steps {
-                        dir('cast-service') {
+                        dir('cast-service'){
                             script {
                                 sh """
                                     docker build -t ${CAST_IMAGE}:${DOCKER_TAG} .
@@ -30,9 +30,9 @@ pipeline {
                     }
                 }
 
-                stage('Build Movie Service') {
+                stage('Build Movie Service'){
                     steps {
-                        dir('movie-service') {
+                        dir('movie-service'){
                             script {
                                 sh """
                                     docker build -t ${MOVIE_IMAGE}:${DOCKER_TAG} .
@@ -55,23 +55,26 @@ pipeline {
                 }
             }
         }
-        parallel{
-            stage('Test Acceptance MOVIE SERVICE'){
-                steps {
-                    script{
-                        sh """
-                            curl http://localhost:8081/api/v1/movies/docs
-                        """
+
+        stage('Acceptance Tests'){
+            parallel{
+                stage('Acceptance Test MOVIE SERVICE'){
+                    steps {
+                        script{
+                            sh """
+                                curl http://localhost:8081/api/v1/movies/docs
+                            """
+                        }
                     }
                 }
-            }
 
-            stage('Test Acceptance CAST SERVICE'){
-                steps {
-                    script{
-                        sh """
-                            curl http://localhost:8081/api/v1/casts/docs
-                        """
+                stage('Acceptance Test CAST SERVICE'){
+                    steps {
+                        script{
+                            sh """
+                                curl http://localhost:8081/api/v1/casts/docs
+                            """
+                        }
                     }
                 }
             }
@@ -88,49 +91,50 @@ pipeline {
             }
         }
 
+        stage('Push Images'){
+            parallel{
+                stage('Push CAST Image'){
+                    environment {
+                        DOCKER_PASS = credentials("DOCKER_HUB_PASS") // Récupère le mot de passe Docker depuis les credentials Jenkins
+                    }
+                    steps {
+                        script {
+                            // Connexion à Docker Hub
+                            sh """
+                                docker login -u ${DOCKER_ID} -p ${DOCKER_PASS}
+                            """
 
-        parallel{
-            stage('Push CAST Image') {
-                environment {
-                    DOCKER_PASS = credentials("DOCKER_HUB_PASS") // Récupère le mot de passe Docker depuis les credentials Jenkins
-                }
-                steps {
-                    script {
-                        // Connexion à Docker Hub
-                        sh """
-                            docker login -u ${DOCKER_ID} -p ${DOCKER_PASS}
-                        """
+                            // Pousser cast-service
+                            sh """
+                                docker push ${CAST_IMAGE}:${DOCKER_TAG}
+                            """
 
-                        // Pousser cast-service
-                        sh """
-                            docker push ${CAST_IMAGE}:${DOCKER_TAG}
-                        """
-
-                        // Déconnexion de Docker Hub
-                        sh 'docker logout'
+                            // Déconnexion de Docker Hub
+                            sh 'docker logout'
+                        }
                     }
                 }
-            }
-        
+            
 
-            stage('Push MOVIE Image') {
-                environment {
-                    DOCKER_PASS = credentials("DOCKER_HUB_PASS") // Récupère le mot de passe Docker depuis les credentials Jenkins
-                }
-                steps {
-                    script {
-                        // Connexion à Docker Hub
-                        sh """
-                            docker login -u ${DOCKER_ID} -p ${DOCKER_PASS}
-                        """
+                stage('Push MOVIE Image'){
+                    environment {
+                        DOCKER_PASS = credentials("DOCKER_HUB_PASS") // Récupère le mot de passe Docker depuis les credentials Jenkins
+                    }
+                    steps {
+                        script {
+                            // Connexion à Docker Hub
+                            sh """
+                                docker login -u ${DOCKER_ID} -p ${DOCKER_PASS}
+                            """
 
-                        // Pousser movie-service
-                        sh """
-                            docker push ${MOVIE_IMAGE}:${DOCKER_TAG}
-                        """
+                            // Pousser movie-service
+                            sh """
+                                docker push ${MOVIE_IMAGE}:${DOCKER_TAG}
+                            """
 
-                        // Déconnexion de Docker Hub
-                        sh 'docker logout'
+                            // Déconnexion de Docker Hub
+                            sh 'docker logout'
+                        }
                     }
                 }
             }
