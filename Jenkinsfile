@@ -12,7 +12,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Récupère le code source depuis le dépôt
                 checkout scm
             }
         }
@@ -21,18 +20,24 @@ pipeline {
             parallel {
                 stage('Build Cast Service') {
                     steps {
-                        script {
-                            // Construction de l'image Docker pour cast-service
-                            docker.build("${CAST_IMAGE}:${DOCKER_TAG}", "cast-service")
+                        dir('cast-service') {
+                            script {
+                                sh """
+                                    docker build -t ${CAST_IMAGE}:${DOCKER_TAG} .
+                                """
+                            }
                         }
                     }
                 }
 
                 stage('Build Movie Service') {
                     steps {
-                        script {
-                            // Construction de l'image Docker pour movie-service
-                            docker.build("${MOVIE_IMAGE}:${DOCKER_TAG}", "movie-service")
+                        dir('movie-service') {
+                            script {
+                                sh """
+                                    docker build -t ${MOVIE_IMAGE}:${DOCKER_TAG} .
+                                """
+                            }
                         }
                     }
                 }
@@ -41,27 +46,26 @@ pipeline {
 
         stage('Push Docker Images') {
             steps {
-                script {
-                    // Récupère les informations d'identification Docker Hub depuis Jenkins
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', 
-                                                     usernameVariable: 'DOCKER_ID', 
-                                                     passwordVariable: 'DOCKER_PASS')]) {
-                        // Login Docker
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials',
+                                                 usernameVariable: 'DOCKER_ID',
+                                                 passwordVariable: 'DOCKER_PASS')]) {
+                    script {
+                        // Login à Docker Hub
                         sh """
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" --password-stdin
                         """
-                        
-                        // Push cast-service
+
+                        // Pousser cast-service
                         sh """
                             docker push ${CAST_IMAGE}:${DOCKER_TAG}
                         """
-                        
-                        // Push movie-service
+
+                        // Pousser movie-service
                         sh """
                             docker push ${MOVIE_IMAGE}:${DOCKER_TAG}
                         """
-                        
-                        // Logout Docker
+
+                        // Déconnexion de Docker Hub
                         sh 'docker logout'
                     }
                 }
