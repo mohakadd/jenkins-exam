@@ -68,9 +68,10 @@ pipeline {
                 stage('Acceptance Test MOVIE SERVICE'){
                     steps {
                         script{
-                            sh """
-                                curl http://localhost:8081/api/v1/movies/docs
-                            """
+                            def response = sh(script: "curl -s http://localhost:8081/api/v1/movies/docs", returnStdout: true).trim()
+                            if (!response.contains("FastAPI - Swagger UI")) {
+                                error("Acceptance Test MOVIE SERVICE failed: Expected 'FastAPI - Swagger UI' in response")
+                            }
                         }
                     }
                 }
@@ -78,9 +79,10 @@ pipeline {
                 stage('Acceptance Test CAST SERVICE'){
                     steps {
                         script{
-                            sh """
-                                curl http://localhost:8081/api/v1/casts/docs
-                            """
+                            def response = sh(script: "curl -s http://localhost:8081/api/v1/casts/docs", returnStdout: true).trim()
+                            if (!response.contains("FastAPI - Swagger UI")) {
+                                error("Acceptance Test CAST SERVICE failed: Expected 'FastAPI - Swagger UI' in response")
+                            }
                         }
                     }
                 }
@@ -204,7 +206,7 @@ pipeline {
 
         stage('Deploiement en PROD'){
             when {
-                expression { env.BRANCH_NAME == 'dev' }
+                expression { env.BRANCH_NAME == 'master' }
             }
             environment {
                 KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
