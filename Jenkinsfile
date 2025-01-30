@@ -140,32 +140,101 @@ pipeline {
             }
         }
 
-        stage('Deploiement en dev'){
+        stage('Deploiement environments'){
+            parallel{
+                stage('Deploiement en DEV'){
+                    environment {
+                        KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
+                    }
+                    steps {
+                        script {
+                            sh '''
+                            rm -Rf .kube
+                            mkdir .kube
+                            ls
+                            cat $KUBECONFIG > .kube/config
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace dev --set nginx.nodePort=30001
+                            '''
+                        }
+                    }
+                }
+
+                stage('Deploiement en QA'){
+                    environment {
+                        KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
+                    }
+                    steps {
+                        script {
+                            sh '''
+                            rm -Rf .kube
+                            mkdir .kube
+                            ls
+                            cat $KUBECONFIG > .kube/config
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace qa --set nginx.nodePort=30002
+                            '''
+                        }
+                    }
+                }
+            
+                stage('Deploiement en STAGING'){
+                    environment {
+                        KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
+                    }
+                    steps {
+                        script {
+                            sh '''
+                            rm -Rf .kube
+                            mkdir .kube
+                            ls
+                            cat $KUBECONFIG > .kube/config
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace staging --set nginx.nodePort=30003
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploiement en PROD'){
             environment {
                 KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
             }
             steps {
                 script {
-                    sh '''
-                    rm -Rf .kube
-                    mkdir .kube
-                    ls
-                    cat $KUBECONFIG > .kube/config
-                    helm upgrade --install movie-app ./movie-app --values=values.yml --namespace dev --set nginx.nodePort=30000
-                    '''
+
+                    // Check if the branch is master
+                    def isMasterBranch = BRANCH_NAME == 'master'
+        
+                    // If on master, request manual approval
+                    if (isMasterBranch) {
+                        timeout(time: 15, unit: "MINUTES") {
+                            input message: 'Do you want to deploy in production?', ok: 'Yes'
+                        }
+                        script {
+                        sh '''
+                            rm -Rf .kube
+                            mkdir .kube
+                            ls
+                            cat $KUBECONFIG > .kube/config
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=30001
+                        '''
+                        }
+                    } else {
+                        echo "Not deploying to production because the build is not on the master branch, branch name:"
+                        echo BRANCH_NAME
+                    }
                 }
             }
         }
-
 
 }
 
     post {
         success {
-            echo 'Images Docker construites et poussées avec succès.'
+            echo 'Les environements sont déployés'
         }
         failure {
-            echo 'Échec de la construction ou du push des images Docker.'
+            echo 'Échec du pipline.'
         }
     }
 }
