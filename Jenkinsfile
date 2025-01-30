@@ -7,6 +7,7 @@ pipeline {
         CAST_IMAGE = "mohakadd/cast-service"
         MOVIE_IMAGE = "mohakadd/movie-service"
         DOCKER_TAG = "latest"
+        // Vriable pour la branche courrente
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
     }
 
@@ -202,6 +203,9 @@ pipeline {
         }
 
         stage('Deploiement en PROD'){
+            when {
+                expression { env.BRANCH_NAME == 'dev' }
+            }
             environment {
                 KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
             }
