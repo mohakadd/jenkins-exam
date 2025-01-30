@@ -7,12 +7,18 @@ pipeline {
         CAST_IMAGE = "mohakadd/cast-service"
         MOVIE_IMAGE = "mohakadd/movie-service"
         DOCKER_TAG = "latest"
+        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
     }
 
     stages {
         stage('Checkout'){
             steps {
                 checkout scm
+                script{
+                    sh"""
+                     echo "Branche du projet : ${BRANCH_NAME}"
+                    """
+                }
             }
         }
 
@@ -200,29 +206,20 @@ pipeline {
                 KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
             }
             steps {
-                script {
+            // Create an Approval Button with a timeout of 15minutes.
+            // this require a manuel validation in order to deploy on production environment
+                timeout(time: 15, unit: "MINUTES") {
+                    input message: 'Do you want to deploy in production ?', ok: 'Yes'
+                }
 
-                    // Check if the branch is master
-                    def isMasterBranch = env.BRANCH_NAME == 'master'
-        
-                    // If on master, request manual approval
-                    if (isMasterBranch) {
-                        timeout(time: 15, unit: "MINUTES") {
-                            input message: 'Do you want to deploy in production?', ok: 'Yes'
-                        }
-                        script {
-                        sh '''
-                            rm -Rf .kube
-                            mkdir .kube
-                            ls
-                            cat $KUBECONFIG > .kube/config
-                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=30000
-                        '''
-                        }
-                    } else {
-                        echo "Not deploying to production because the build is not on the master branch, branch name:"
-                        echo env.BRANCH_NAME
-                    }
+                script {
+                    sh '''
+                    rm -Rf .kube
+                    mkdir .kube
+                    ls
+                    cat $KUBECONFIG > .kube/config
+                    helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=30000
+                    '''
                 }
             }
         }
