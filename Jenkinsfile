@@ -10,14 +10,14 @@ pipeline {
         // Variable pour la branche courrente
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         // Environements
-        IP_PROD = 52.213.203.192
-        IP_DEV = 52.213.203.192
-        IP_QA = 52.213.203.192
-        IP_STAGING = 52.213.203.192
-        NODEPORT_PROD = 30000
-        NODEPORT_DEV = 30001
-        NODEPORT_QA = 30002
-        NODEPORT_STAGING = 30003
+        IP_PROD = "52.213.203.192"
+        IP_DEV = "52.213.203.192"
+        IP_QA = "52.213.203.192"
+        IP_STAGING = "52.213.203.192"
+        NODEPORT_PROD = "30000"
+        NODEPORT_DEV = "30001"
+        NODEPORT_QA = "30002"
+        NODEPORT_STAGING = "30003"
     }
 
     stages {
