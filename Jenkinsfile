@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         // Variables pour les images Docker
+        DOCKER_ID="mohakadd"
         CAST_IMAGE = "mohakadd/cast-service"
         MOVIE_IMAGE = "mohakadd/movie-service"
         DOCKER_TAG = "latest"
