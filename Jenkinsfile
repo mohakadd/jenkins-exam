@@ -203,7 +203,7 @@ pipeline {
                 script {
 
                     // Check if the branch is master
-                    def isMasterBranch = BRANCH_NAME == 'master'
+                    def isMasterBranch = env.BRANCH_NAME == 'master'
         
                     // If on master, request manual approval
                     if (isMasterBranch) {
@@ -216,12 +216,12 @@ pipeline {
                             mkdir .kube
                             ls
                             cat $KUBECONFIG > .kube/config
-                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=30001
+                            helm upgrade --install movie-app ./movie-app --values=values.yml --namespace prod --set nginx.nodePort=30000
                         '''
                         }
                     } else {
                         echo "Not deploying to production because the build is not on the master branch, branch name:"
-                        echo BRANCH_NAME
+                        echo env.BRANCH_NAME
                     }
                 }
             }
