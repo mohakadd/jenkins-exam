@@ -245,12 +245,24 @@ pipeline {
 
 }
 
-    post {
-        success {
-            echo 'Les environements sont déployés'
-        }
-        failure {
-            echo 'Échec du pipline.'
+post {
+    success {
+        echo 'Les environnements sont déployés'
+        echo "Accédez à l'environnement de production : http://${IP_PROD}:${NODEPORT_PROD}"
+       
+        script {
+            currentBuild.description = """
+        <ul>
+            <li><a href='http://${IP_PROD}:${NODEPORT_PROD}/api/v1/movies/docs' target='_blank'>🔗 Accéder à l'application en PROD</a></li>
+            <li><a href='http://${IP_DEV}:${NODEPORT_DEV}/api/v1/movies/docs' target='_blank'>🔗 Accéder à l'application en DEV</a></li>
+            <li><a href='http://${IP_QA}:${NODEPORT_QA}/api/v1/movies/docs' target='_blank'>🔗 Accéder à l'application en QA</a></li>
+            <li><a href='http://${IP_STAGING}:${NODEPORT_STAGING}/api/v1/movies/docs' target='_blank'>🔗 Accéder à l'application en STAGING</a></li>
+        </ul>
+    """
         }
     }
+    failure {
+        echo 'Échec du pipeline.'
+    }
+}
 }
