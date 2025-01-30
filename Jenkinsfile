@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Variables pour les images Docker
-        DOCKER_ID="mohakadd"
+        DOCKER_ID = "mohakadd"
         CAST_IMAGE = "mohakadd/cast-service"
         MOVIE_IMAGE = "mohakadd/movie-service"
         DOCKER_TAG = "latest"
@@ -45,27 +45,28 @@ pipeline {
         }
 
         stage('Push Docker Images') {
-            environment
-            {
-                DOCKER_PASS = credentials("DOCKER_HUB_PASS") // we retrieve  docker password from secret text called docker_hub_pass saved on jenkins
+            environment {
+                DOCKER_PASS = credentials("DOCKER_HUB_PASS") // Récupère le mot de passe Docker depuis les credentials Jenkins
             }
             steps {
-                    script {
-                        // Pousser cast-service
-                        sh """
-                            docker login -u $DOCKER_ID -p $DOCKER_PASS
-                            docker push $CAST_IMAGE:$DOCKER_TAG
-                        """
+                script {
+                    // Connexion à Docker Hub
+                    sh """
+                        docker login -u ${DOCKER_ID} -p ${DOCKER_PASS}
+                    """
 
-                        // Pousser movie-service
-                        sh """
-                            docker login -u $DOCKER_ID -p $DOCKER_PASS
-                            docker push $CAST_MOVIE:$DOCKER_TAG
-                        """
+                    // Pousser cast-service
+                    sh """
+                        docker push ${CAST_IMAGE}:${DOCKER_TAG}
+                    """
 
-                        // Déconnexion de Docker Hub
-                        sh 'docker logout'
-                    }
+                    // Pousser movie-service
+                    sh """
+                        docker push ${MOVIE_IMAGE}:${DOCKER_TAG}
+                    """
+
+                    // Déconnexion de Docker Hub
+                    sh 'docker logout'
                 }
             }
         }
