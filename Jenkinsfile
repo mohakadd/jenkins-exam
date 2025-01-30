@@ -88,6 +88,27 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploiement en dev'){
+            environment {
+                KUBECONFIG = credentials("config") // we retrieve  kubeconfig from secret file called config saved on jenkins
+            }
+            steps {
+                script {
+                    sh '''
+                    rm -Rf .kube
+                    mkdir .kube
+                    ls
+                    cat $KUBECONFIG > .kube/config
+                    cp movie-app/values.yaml values.yml
+                    cat values.yml
+                    helm upgrade --install app fastapi --values=values.yml --namespace dev --set nginx.nodePort=30000
+                    '''
+                }
+            }
+        }
+
+
 }
 
     post {
