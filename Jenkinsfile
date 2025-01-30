@@ -45,24 +45,22 @@ pipeline {
         }
 
         stage('Push Docker Images') {
+            environment
+            {
+                DOCKER_PASS = credentials("DOCKER_HUB_PASS") // we retrieve  docker password from secret text called docker_hub_pass saved on jenkins
+            }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials',
-                                                 usernameVariable: 'DOCKER_ID',
-                                                 passwordVariable: 'DOCKER_PASS')]) {
                     script {
-                        // Login à Docker Hub
-                        sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" --password-stdin
-                        """
-
                         // Pousser cast-service
                         sh """
-                            docker push ${CAST_IMAGE}:${DOCKER_TAG}
+                            docker login -u $DOCKER_ID -p $DOCKER_PASS
+                            docker push $CAST_IMAGE:$DOCKER_TAG
                         """
 
                         // Pousser movie-service
                         sh """
-                            docker push ${MOVIE_IMAGE}:${DOCKER_TAG}
+                            docker login -u $DOCKER_ID -p $DOCKER_PASS
+                            docker push $CAST_MOVIE:$DOCKER_TAG
                         """
 
                         // Déconnexion de Docker Hub
