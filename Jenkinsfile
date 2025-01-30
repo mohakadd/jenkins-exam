@@ -44,6 +44,50 @@ pipeline {
             }
         }
 
+
+        stage('Run Build test'){
+            steps {
+                script{
+                    sh """
+                        docker compose -p movie-test -f docker-compose.yml up -d
+                        sleep 10
+                    """
+                }
+            }
+        }
+
+        stage('Test Acceptance MOVIE SERVICE'){
+            steps {
+                script{
+                    sh """
+                    sleep 10
+                    curl http://localhost:8081/api/v1/movies/docs
+                    """
+                }
+            }
+        }
+
+        stage('Test Acceptance CAST SERVICE'){
+            steps {
+                script{
+                    sh """
+                    curl http://localhost:8081/api/v1/casts/docs
+                    """
+                }
+            }
+        }
+
+        stage('Down Build test'){
+            steps {
+                script{
+                    sh """
+                        docker compose -p movie-test -f docker-compose.yml down
+                        sleep 10
+                    """
+                }
+            }
+        }
+
         stage('Push CAST Image') {
             environment {
                 DOCKER_PASS = credentials("DOCKER_HUB_PASS") // Récupère le mot de passe Docker depuis les credentials Jenkins
